@@ -1,0 +1,56 @@
+{
+  "meta": {
+    "id": "manual_test",
+    "nodes": 3,
+    "description": "Simple 3-node test graph"
+  },
+  "nodes": [
+    {
+      "id": 0,
+      "lat": 19.0,
+      "lon": 72.0,
+      "pois": ["Restaurant"]
+    },
+    {
+      "id": 1,
+      "lat": 19.01,
+      "lon": 72.0,
+      "pois": []
+    },
+    {
+      "id": 2,
+      "lat": 19.01,
+      "lon": 72.01,
+      "pois": ["Hospital"]
+    }
+  ],
+  "edges": [
+    {
+      "id": 0,
+      "u": 0,
+      "v": 1,
+      "length": 100.0,
+      "average_time": 8.0,
+      "oneway": false,
+      "road_type": "primary"
+    },
+    {
+      "id": 1,
+      "u": 1,
+      "v": 2,
+      "length": 150.0,
+      "average_time": 12.0,
+      "oneway": false,
+      "road_type": "secondary"
+    },
+    {
+      "id": 2,
+      "u": 0,
+      "v": 2,
+      "length": 200.0,
+      "average_time": 15.0,
+      "oneway": false,
+      "road_type": "local"
+    }
+  ]
+}

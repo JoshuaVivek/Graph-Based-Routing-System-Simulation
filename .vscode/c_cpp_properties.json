@@ -1,0 +1,21 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE"
+            ],
+            "cStandard": "c23",
+            "cppStandard": "c++23",
+            "includePath": [
+                "\"/usr/include\",",
+                "\"/usr/include/c++/<c++23>\",",
+                "\"/usr/local/include\""
+            ],
+            "compilerPath": "/usr/bin/g++"
+        }
+    ],
+    "version": 4
+}

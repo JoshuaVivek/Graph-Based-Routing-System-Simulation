@@ -54,15 +54,11 @@ struct Edge
 
 class Graph
 {
-    private:
+    public:
     vector<Node> all_Nodes;
     vector<Edge> all_Edges;
     unordered_map<int,int> node_id_Nodes_index; //Easy to get index from node id
     unordered_map<int,int> edge_id_Edges_index; //Easy to get index from edge id
-    
-
-    public:
-
     vector<vector<int>> adj_nodes;  //adjacent nodes list
 
     Graph();

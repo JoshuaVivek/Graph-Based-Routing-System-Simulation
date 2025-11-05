@@ -5,10 +5,10 @@
             "includePath": [
                 "${default}"
             ],
-            "compilerPath": "/usr/bin/g++",
+            "compilerPath": "C:/MinGW/bin/g++.exe",
             "cStandard": "c17",
             "cppStandard": "gnu++17",
-            "intelliSenseMode": "linux-gcc-x64"
+            "intelliSenseMode": "gcc-x64"
         }
     ],
     "version": 4

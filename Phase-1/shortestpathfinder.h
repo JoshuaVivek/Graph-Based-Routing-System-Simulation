@@ -8,10 +8,11 @@
 struct Shortestpath
 {
     bool possible;
-    double min_time/min_dis;
+    double min_time;
+    double min_distance;
     vector<int> Path;
 
-    Shortestpath() : possible(false),min_time/min_dis(0) {}
+    Shortestpath() : possible(false), min_time(0), min_distance(0) {}
 };
 
 struct Constraints

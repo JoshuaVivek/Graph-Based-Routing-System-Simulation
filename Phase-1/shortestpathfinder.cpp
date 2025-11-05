@@ -125,7 +125,7 @@ Shortestpath shortestpath_by_distance(Graph g, Constraints constraints,int sourc
     return result;    
 }
 
-Shortestpath shortestpath_by_time(Graph g,Constraints constraints,int source_id,int target_id);
+Shortestpath shortestpath_by_time(Graph g,Constraints constraints,int source_id,int target_id)
 {
     
 }

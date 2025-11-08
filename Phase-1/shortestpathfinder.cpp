@@ -141,7 +141,7 @@ Shortestpath shortestpath_by_distance(Graph& g, Constraints constraints,int sour
     }
     
     result.possible = true;
-    result.min_distance = dist[target_index];
+    result.min_dis_time = dist[target_index];
     result.Path = final_path;
     
     return result;    
@@ -291,8 +291,10 @@ Shortestpath shortestpath_by_time(Graph& g,Constraints constraints,int source_id
     }
     
     result.possible = true;
-    result.min_time = time_taken[target_index];
+    result.min_dis_time = time_taken[target_index];
     result.Path = final_path;
     
     return result;    
 }
+
+

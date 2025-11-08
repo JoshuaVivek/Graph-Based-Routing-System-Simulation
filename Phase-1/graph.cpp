@@ -5,6 +5,18 @@
 #include <stdexcept>
 #include <algorithm>
 
+//helper function
+double calc_euclidean_dist(double lat1,double lat2,double lon1,double lon2) 
+{
+    double answer;
+    double x = lat2-lat1;
+    double y = lon1-lon2;
+    double x_sq = x*x;
+    double y_sq = y*y;
+    answer = sqrt(x_sq + y_sq);
+    return answer;
+}
+
 Graph:: Graph() {}
 //Constructor
 
@@ -139,4 +151,37 @@ bool Graph::modify_edge(int edge_id,json& patch)
     make_adj_list();  //new edge may be added
     return true;
     
+}
+
+vector<int> Graph::get_nodes_with_poi(string s)
+{   
+    vector<int> v;
+    for(int i=0;i<all_Nodes.size();i++){
+        Node node=all_Nodes[i];
+        for(auto p : node.pois){
+            if(p == s){
+                v.push_back(i);
+                break;
+            }
+        }
+    }
+    return v;
+}
+
+int Graph::get_nearest_node(double l1,double l2)
+{
+    double least = 1e18;
+    int least_idx = -1;
+    for(int i=0;i<all_Nodes.size();i++){
+        Node node = all_Nodes[i];
+        double latitude = node.lat;
+        double longitude = node.lon;
+        double distance = calc_euclidean_dist(latitude,l1,longitude,l2);
+        if(distance<least){
+            least = distance;
+            least_idx = i;
+        }
+    }
+    return least_idx;
+
 }

@@ -63,7 +63,7 @@ class Graph
 
 
     vector<vector<int>> adj_nodes;  //adjacent nodes 
-    vector<vector<pair<int,int>> adj_list; //this contains both neighbour index , and the edge index in all_Edge vector
+    vector<vector<pair<int,int>>> adj_list; //this contains both neighbour index , and the edge index in all_Edge vector
 
     Graph();
 
@@ -79,11 +79,9 @@ class Graph
     bool modify_edge(int edge_id, json& patch);
     //One for removing edge ,and modifying as Dynamic Updates
 
-
-    //Shortest Path
-
     //KNN Queries
-
+    vector<int> get_nodes_with_poi(string s);
+    int get_nearest_node(double l1,double l2);
 };
 
 #endif

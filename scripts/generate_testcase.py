@@ -185,5 +185,5 @@ def main():
     check_output_shape(output_path)
     print("[ok] wrote", output_path)
 
-if _name_ == "_main_":
+if __name__ == "_main_":
     main()

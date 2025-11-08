@@ -52,12 +52,13 @@ vector<int> knn_by_shortestpath(Graph& g,int k,double q_lat,double q_lon,string 
     vector<int> answer;
     vector<int> nodes_same_poi = g.get_nodes_with_poi(poi);
     int node_idx = g.get_nearest_node(q_lat,q_lon);
+    Node node = g.all_Nodes[node_idx];
     priority_queue<pair<double,int>> pq;
     for(int i=0;i<nodes_same_poi.size();i++){
-        int target_id=g.all_Nodes[i].id;
+        int target_id=g.all_Nodes[nodes_same_poi[i]].id;
         Shortestpath result;
         Constraints c;
-        result = shortestpath_by_distance(g,c,node_idx.id,target_id);
+        result = shortestpath_by_distance(g,c,node.id,target_id);
         double distance = result.min_dis_time;
         if(pq.size()<k) {pq.push({distance,target_id});}
         else {

@@ -6,7 +6,7 @@
 #include <algorithm>
 
 //helper function
-double calc_euclidean_dist(double lat1,double lat2,double lon1,double lon2) 
+double euclidean_dist(double lat1,double lat2,double lon1,double lon2) 
 {
     double answer;
     double x = lat2-lat1;
@@ -176,7 +176,7 @@ int Graph::get_nearest_node(double l1,double l2)
         Node node = all_Nodes[i];
         double latitude = node.lat;
         double longitude = node.lon;
-        double distance = calc_euclidean_dist(latitude,l1,longitude,l2);
+        double distance = euclidean_dist(latitude,l1,longitude,l2);
         if(distance<least){
             least = distance;
             least_idx = i;

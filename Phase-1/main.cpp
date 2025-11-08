@@ -7,6 +7,7 @@
 
 #include "graph.h"
 #include "shortestpathfinder.h"
+#include "knn.h"
 #include "../json.h"
 
 
@@ -24,7 +25,7 @@ static Constraints parse_constraints(const json& query) {
         // forbidden nodes: list of node ids
         auto forbidden_nodes_it = constraints_it->find("forbidden_nodes");
         if (forbidden_nodes_it != constraints_it->end() && forbidden_nodes_it->is_array()) {
-            for (const auto& x : *forbidden_nodes_it) constraints.forbidden_nodes.push_back(x.get<int>());
+            for (const auto& x : *forbidden_nodes_it) constraints.forbidden_nodes.insert(x.get<int>());
         }
 
 
@@ -32,9 +33,9 @@ static Constraints parse_constraints(const json& query) {
         auto forbidden_road_types_it = constraints_it->find("forbidden_road_types");
         auto forbidden_roadtypes_it  = constraints_it->find("forbidden_roadtypes");
         if (forbidden_road_types_it != constraints_it->end() && forbidden_road_types_it->is_array()) {
-            for (const auto& s : *forbidden_road_types_it) constraints.forbidden_roadtypes.push_back(s.get<string>());
+            for (const auto& s : *forbidden_road_types_it) constraints.forbidden_roadtypes.insert(s.get<string>());
         } else if (forbidden_roadtypes_it != constraints_it->end() && forbidden_roadtypes_it->is_array()) {
-            for (const auto& s : *forbidden_roadtypes_it) constraints.forbidden_roadtypes.push_back(s.get<string>());
+            for (const auto& s : *forbidden_roadtypes_it) constraints.forbidden_roadtypes.insert(s.get<string>());
         }
     }
 
@@ -92,14 +93,13 @@ int main(int argc, char* argv[]) {
                     int edge_id = event.value("edge_id", -1);
                     bool success = (edge_id != -1) ? graph.remove_edge(edge_id) : false;
                     result["id"] = event.value("id", -1);
-                    result["possible"] = success;
+                    result["done"] = success;
 
 
                 } else if (type_str == "modify_edge") {
                     // simple placeholder wire to Graph::modify_edge if you added it
                     result["id"] = event.value("id", -1);
-                    result["possible"] = false;
-                    result["error"] = "modify_edge not implemented";
+                    result["done"] = false;
 
 
                 } else if (type_str == "shortest_path") {
@@ -124,16 +124,29 @@ int main(int argc, char* argv[]) {
                     result["id"] = query_id;
                     result["possible"] = sp_result.possible;
                     if (sp_result.possible) {
-                        if (mode_str == "time") result["minimum_time"] = sp_result.min_time;
-                        else                    result["minimum_distance"] = sp_result.min_distance;
+                        if (mode_str == "time") result["minimum_time"] = sp_result.min_dis_time;
+                        else                    result["minimum_distance"] = sp_result.min_dis_time;
                         result["path"] = sp_result.Path; // list of node ids
                     }
 
 
                 } else if (type_str == "knn") {
                     result["id"] = event.value("id", -1);
-                    result["error"] = "knn not implemented";
-
+                    int k = event.value("k",1);
+                    string poi = event.value("poi","");
+                    string metric = event.value("metric", event.value("mode", string("euclidean")));
+                    vector<int> nodes;
+                    if(poi !=""){
+                        auto query_point = event["query_point"];
+                        double q_lat = query_point.value("lat",0.0);
+                        double q_lon = query_point.value("lon",0.0);
+                        if(metric == "shortest_path"){
+                            nodes = knn_by_shortestpath(graph,k,q_lat,q_lon,poi);
+                        }else {
+                            nodes = knn_by_euclidean (graph,k,q_lat,q_lon,poi);
+                        }
+                    }
+                    result["nodes"]= nodes;
 
                 } else {
                     result["error"] = "Unknown query type";

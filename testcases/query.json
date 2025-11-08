@@ -1,0 +1,272 @@
+{
+  "meta": {
+    "id": "test_queries_with_road_constraints"
+  },
+  "events": [
+    {
+      "type": "shortest_path",
+      "id": 0,
+      "source": 24,
+      "target": 1,
+      "mode": "distance",
+      "constraints": {}
+    },
+    {
+      "type": "shortest_path",
+      "id": 1,
+      "source": 5,
+      "target": 16,
+      "mode": "distance",
+      "constraints": {}
+    },
+    {
+      "type": "shortest_path",
+      "id": 2,
+      "source": 24,
+      "target": 4,
+      "mode": "distance",
+      "constraints": {}
+    },
+    {
+      "type": "shortest_path",
+      "id": 3,
+      "source": 23,
+      "target": 15,
+      "mode": "distance",
+      "constraints": {}
+    },
+    {
+      "type": "shortest_path",
+      "id": 4,
+      "source": 13,
+      "target": 18,
+      "mode": "distance",
+      "constraints": {}
+    },
+    {
+      "type": "shortest_path",
+      "id": 5,
+      "source": 12,
+      "target": 11,
+      "mode": "distance",
+      "constraints": {
+        "forbidden_nodes": [
+          24,
+          4,
+          21
+        ]
+      }
+    },
+    {
+      "type": "shortest_path",
+      "id": 6,
+      "source": 18,
+      "target": 9,
+      "mode": "distance",
+      "constraints": {
+        "forbidden_nodes": [
+          24,
+          1,
+          8
+        ]
+      }
+    },
+    {
+      "type": "shortest_path",
+      "id": 7,
+      "source": 6,
+      "target": 0,
+      "mode": "distance",
+      "constraints": {
+        "forbidden_nodes": [
+          2,
+          11,
+          16
+        ]
+      }
+    },
+    {
+      "type": "shortest_path",
+      "id": 8,
+      "source": 3,
+      "target": 17,
+      "mode": "distance",
+      "constraints": {
+        "forbidden_road_types": [
+          "expressway"
+        ]
+      }
+    },
+    {
+      "type": "shortest_path",
+      "id": 9,
+      "source": 9,
+      "target": 12,
+      "mode": "distance",
+      "constraints": {
+        "forbidden_road_types": [
+          "local"
+        ]
+      }
+    },
+    {
+      "type": "shortest_path",
+      "id": 10,
+      "source": 4,
+      "target": 3,
+      "mode": "distance",
+      "constraints": {
+        "forbidden_road_types": [
+          "expressway",
+          "primary"
+        ]
+      }
+    },
+    {
+      "type": "shortest_path",
+      "id": 11,
+      "source": 4,
+      "target": 10,
+      "mode": "distance",
+      "constraints": {
+        "forbidden_road_types": [
+          "tertiary",
+          "local"
+        ]
+      }
+    },
+    {
+      "type": "shortest_path",
+      "id": 12,
+      "source": 16,
+      "target": 13,
+      "mode": "distance",
+      "constraints": {
+        "forbidden_nodes": [
+          4,
+          23
+        ],
+        "forbidden_road_types": [
+          "local"
+        ]
+      }
+    },
+    {
+      "type": "shortest_path",
+      "id": 13,
+      "source": 11,
+      "target": 7,
+      "mode": "distance",
+      "constraints": {
+        "forbidden_nodes": [
+          19,
+          23
+        ],
+        "forbidden_road_types": [
+          "secondary",
+          "tertiary"
+        ]
+      }
+    },
+    {
+      "type": "shortest_path",
+      "id": 14,
+      "source": 7,
+      "target": 3,
+      "mode": "time",
+      "constraints": {}
+    },
+    {
+      "type": "shortest_path",
+      "id": 15,
+      "source": 22,
+      "target": 1,
+      "mode": "time",
+      "constraints": {}
+    },
+    {
+      "type": "shortest_path",
+      "id": 16,
+      "source": 24,
+      "target": 5,
+      "mode": "time",
+      "constraints": {}
+    },
+    {
+      "type": "knn",
+      "id": 17,
+      "poi_type": "ATM",
+      "query_point": {
+        "lat": 19.09160800501869,
+        "lon": 72.0637373026064
+      },
+      "k": 4,
+      "metric": "euclidean"
+    },
+    {
+      "type": "knn",
+      "id": 18,
+      "poi_type": "Mall",
+      "query_point": {
+        "lat": 19.061519407307053,
+        "lon": 72.06646910472648
+      },
+      "k": 4,
+      "metric": "euclidean"
+    },
+    {
+      "type": "knn",
+      "id": 19,
+      "poi_type": "Gas Station",
+      "query_point": {
+        "lat": 19.04665390051799,
+        "lon": 72.00896843654908
+      },
+      "k": 3,
+      "metric": "euclidean"
+    },
+    {
+      "type": "knn",
+      "id": 20,
+      "poi_type": "Gas Station",
+      "query_point": {
+        "lat": 19.00526166060282,
+        "lon": 72.02042449104515
+      },
+      "k": 4,
+      "metric": "euclidean"
+    },
+    {
+      "type": "knn",
+      "id": 21,
+      "poi_type": "Restaurant",
+      "query_node_id": 24,
+      "k": 3,
+      "metric": "shortest_path"
+    },
+    {
+      "type": "knn",
+      "id": 22,
+      "poi_type": "Hospital",
+      "query_node_id": 5,
+      "k": 4,
+      "metric": "shortest_path"
+    },
+    {
+      "type": "knn",
+      "id": 23,
+      "poi_type": "Gas Station",
+      "query_node_id": 17,
+      "k": 4,
+      "metric": "shortest_path"
+    },
+    {
+      "type": "knn",
+      "id": 24,
+      "poi_type": "Mall",
+      "query_node_id": 2,
+      "k": 5,
+      "metric": "shortest_path"
+    }
+  ]
+}

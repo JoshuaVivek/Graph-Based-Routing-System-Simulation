@@ -59,7 +59,11 @@ class Graph
     vector<Edge> all_Edges;
     unordered_map<int,int> node_id_Nodes_index; //Easy to get index from node id
     unordered_map<int,int> edge_id_Edges_index; //Easy to get index from edge id
-    vector<vector<int>> adj_nodes;  //adjacent nodes list
+    
+
+
+    vector<vector<int>> adj_nodes;  //adjacent nodes 
+    vector<vector<pair<int,int>> adj_list; //this contains both neighbour index , and the edge index in all_Edge vector
 
     Graph();
 

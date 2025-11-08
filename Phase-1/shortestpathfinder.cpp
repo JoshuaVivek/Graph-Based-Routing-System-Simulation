@@ -2,31 +2,31 @@
 #include<algorithm>
 #include <queue>
 
-Shortestpath shortestpath_by_distance(Graph g, Constraints constraints,int source_id,int target_id)
+Shortestpath shortestpath_by_distance(Graph& g, Constraints constraints,int source_id,int target_id)
 {
     Shortestpath result;
     result.possible = false;
     
     // Step 1: Checking if source or target are in invalid nodes(in nodes they should not be present)
-    for(int i = 0; i < constraints.forbidden_nodes.size(); i++)
+    /*for(int i = 0; i < constraints.forbidden_nodes.size(); i++)
     {
         if(constraints.forbidden_nodes[i] == source_id || constraints.forbidden_nodes[i] == target_id)
         {
             return result; // Path not possible
         }
-    }
+    }*/
+   if(constraints.forbidden_nodes.count(source_id)>0 || constraints.forbidden_nodes.count(target_id)>0){
+    return result;
+   }
     
     // Step 2: Finding indices of source and target nodes
-    int source_index = -1, target_index = -1;
-    for(int i = 0; i < g.all_Nodes.size(); i++)
-    {
-        if(g.all_Nodes[i].id == source_id) source_index = i;
-        if(g.all_Nodes[i].id == target_id) target_index = i;
+    if(g.node_id_Nodes_index.find(source_id) == g.node_id_Nodes_index.end() ||g.node_id_Nodes_index.find(target_id) == g.node_id_Nodes_index.end()) {
+    return result; // Node doesn't exist
     }
-    if(source_index == -1 || target_index == -1)
-    {
-        return result; // Node not found
-    }
+
+    int source_index = g.node_id_Nodes_index[source_id];
+    int target_index = g.node_id_Nodes_index[target_id];
+
 
     // Step 3: Setup arrays for Dijkstra
     int n = g.all_Nodes.size();
@@ -52,11 +52,11 @@ Shortestpath shortestpath_by_distance(Graph g, Constraints constraints,int sourc
         visited[u] = true;
         
         // Step 5: Check all edges from current node u
-        for(int i = 0; i < g.all_Edges.size(); i++)
+        for(auto [v_index,i]:g.adj_list[u])
         {
             Edge edge = g.all_Edges[i];
             
-            if(edge.is_removed) 
+            /*if(edge.is_removed) 
             {
                 continue; // Skip removed edges
             }
@@ -76,36 +76,34 @@ Shortestpath shortestpath_by_distance(Graph g, Constraints constraints,int sourc
             else
             {
                 continue; // Edge doesn't start from u
-            }
+            }*/
             
             // Step 6: Check if neighbor is forbidden
             int v_id = g.all_Nodes[v_index].id;
-            bool is_forbidden = false;
-            for(int j = 0; j < constraints.forbidden_nodes.size(); j++)
+            //bool is_forbidden = false;
+            /*for(int j = 0; j < constraints.forbidden_nodes.size(); j++)
             {
                 if(constraints.forbidden_nodes[j] == v_id)
                 {
                     is_forbidden = true;
                     break;
                 }
-            }
-            if(is_forbidden)
-            {
+            }*/
+           if(constraints.forbidden_nodes.count(v_id)>0){
                 continue;
             }
 
             // Step 7: Check if road type is forbidden
-            bool road_forbidden = false;
-            for(int j = 0; j < constraints.forbidden_roadtypes.size(); j++)
+            //bool road_forbidden = false;
+            /*for(int j = 0; j < constraints.forbidden_roadtypes.size(); j++)
             {
                 if(constraints.forbidden_roadtypes[j] == edge.road_type)
                 {
                     road_forbidden = true;
                     break;
                 }
-            }
-            if(road_forbidden)
-            {
+            }*/
+           if(constraints.forbidden_roadtypes.count(edge.road_type)>0){
                 continue;
             }
 
@@ -149,32 +147,31 @@ Shortestpath shortestpath_by_distance(Graph g, Constraints constraints,int sourc
     return result;    
 }
 
-Shortestpath shortestpath_by_time(Graph g,Constraints constraints,int source_id,int target_id)
+Shortestpath shortestpath_by_time(Graph& g,Constraints constraints,int source_id,int target_id)
 {
     Shortestpath result;
     result.possible = false;
     
     // Step 1: Checking if source or target are in invalid nodes(in nodes they should not be present)
-    for(int i = 0; i < constraints.forbidden_nodes.size(); i++)
+    /*for(int i = 0; i < constraints.forbidden_nodes.size(); i++)
     {
         if(constraints.forbidden_nodes[i] == source_id || constraints.forbidden_nodes[i] == target_id)
         {
             return result; // Path not possible
         }
-    }
+    }*/
+   if(constraints.forbidden_nodes.count(source_id)>0 || constraints.forbidden_nodes.count(target_id)>0){
+    return result;
+   }
 
 
     // Step 2: Finding indices of source and target nodes
-    int source_index = -1, target_index = -1;
-    for(int i = 0; i < g.all_Nodes.size(); i++)
-    {
-        if(g.all_Nodes[i].id == source_id) source_index = i;
-        if(g.all_Nodes[i].id == target_id) target_index = i;
+    if(g.node_id_Nodes_index.find(source_id) == g.node_id_Nodes_index.end() ||g.node_id_Nodes_index.find(target_id) == g.node_id_Nodes_index.end()) {
+    return result; // Node doesn't exist
     }
-    if(source_index == -1 || target_index == -1)
-    {
-        return result; // Node not found
-    }
+
+    int source_index = g.node_id_Nodes_index[source_id];
+    int target_index = g.node_id_Nodes_index[target_id];
 
 
     // Step 3: Setup arrays for Dijkstra
@@ -205,11 +202,11 @@ Shortestpath shortestpath_by_time(Graph g,Constraints constraints,int source_id,
         visited[u] = true;
         
         // Step 5: Checking all edges from current node u
-        for(int i = 0; i < g.all_Edges.size(); i++)
+        for(auto [v_index,i]: g.adj_list[u])
         {
             Edge edge = g.all_Edges[i];
             
-            if(edge.is_removed)
+            /*if(edge.is_removed)
             {
                 continue; // Skip removed edges
             }
@@ -229,38 +226,34 @@ Shortestpath shortestpath_by_time(Graph g,Constraints constraints,int source_id,
             else
             {
                 continue; // Edge doesn't start from u
-            }
+            }*/
             
             // Step 6: Check if neighbor is forbidden
             int v_id = g.all_Nodes[v_index].id;
-            bool is_forbidden = false;
-            for(int j = 0; j < constraints.forbidden_nodes.size(); j++)
+            //bool is_forbidden = false;
+            /*for(int j = 0; j < constraints.forbidden_nodes.size(); j++)
             {
                 if(constraints.forbidden_nodes[j] == v_id)
                 {
                     is_forbidden = true;
                     break;
                 }
-            }
-
-            if(is_forbidden)
-            {
+            }*/
+            if(constraints.forbidden_nodes.count(v_id)>0){
                 continue;
             }
 
             // Step 7: Check if road type is forbidden
-            bool road_forbidden = false;
-            for(int j = 0; j < constraints.forbidden_roadtypes.size(); j++)
+            //bool road_forbidden = false;
+            /*for(int j = 0; j < constraints.forbidden_roadtypes.size(); j++)
             {
                 if(constraints.forbidden_roadtypes[j] == edge.road_type)
                 {
                     road_forbidden = true;
                     break;
                 }
-            }
-
-            if(road_forbidden)
-            {
+            }*/
+            if(constraints.forbidden_roadtypes.count(edge.road_type)>0){
                 continue;
             }
 

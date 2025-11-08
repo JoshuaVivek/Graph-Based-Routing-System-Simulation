@@ -48,7 +48,7 @@ void Graph::load_from_json(string file_name)
         edge_id_Edges_index[id]=all_Edges.size();
         all_Edges.push_back(e);
     }
-
+    make_adj_list();
     return;
 
 }
@@ -56,20 +56,25 @@ void Graph::load_from_json(string file_name)
 void Graph::make_adj_list()
 {
     adj_nodes.clear(); //clears previous data
+    adj_list.clear();
 
     int size=all_Nodes.size();
     adj_nodes.resize(size);
+    adj_list.resize(size);
     //initialising all empty vectors
 
-    for(auto edge:all_Edges){
+    for(int i=0;i<all_Edges.size();i++){
+        Edge edge = all_Edges[i];
         if(edge.is_removed)continue;
         int id1=edge.u;
         int id2=edge.v;
         int n1=node_id_Nodes_index[id1];
         int n2=node_id_Nodes_index[id2];
         adj_nodes[n1].push_back(n2);
+        adj_list[n1].push_back({n2,i});
         if(!edge.oneway){
             adj_nodes[n2].push_back(n1);
+            adj_list[n2].push_back({n1,i});
         }
     }
 

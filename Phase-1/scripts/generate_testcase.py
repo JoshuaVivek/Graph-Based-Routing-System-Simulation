@@ -2,24 +2,21 @@ import json
 import math
 import os
 import random
-import subprocess
 import sys
 import textwrap
 from urllib.parse import urlparse
-
 import requests
 
+# For Writing JSON data to file and creating directories as needed
 def write_json(path, data):
-    """Write JSON file, create folders if needed."""
     folder = os.path.dirname(path)
     if folder and not os.path.exists(folder):
         os.makedirs(folder, exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
 
-
-def haversine(lat1, lon1, lat2, lon2):
-    """Distance in meters between two lat/lon points."""
+# Helping Function to compute distance between two lat/lon points
+def sine_square_half(lat1, lon1, lat2, lon2):
     R = 6371000.0
     p1 = math.radians(lat1)
     p2 = math.radians(lat2)
@@ -29,26 +26,22 @@ def haversine(lat1, lon1, lat2, lon2):
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
     return R * c
 
-
+#For Generating a simple speed profile with higher speeds in the middle of the day
 def make_speed_profile(slots=24):
-    """Simple speed profile: slower in middle of day, faster at edges."""
     vals = []
     for i in range(slots):
         t = abs(i - (slots / 2.0)) / (slots / 2.0)
         vals.append(round(0.6 + 0.4 * (1.0 - t), 3))
     return vals
 
-
+# IITB map view link of OpenStreetMap(Hard coded with lat, lon of IITB)
 IITB_OSM_URL = "https://www.openstreetmap.org/#map=17/19.1320/72.9150"
 
+# Public Overpass API endpoint
 OVERPASS_URL = "https://overpass-api.de/api/interpreter"
 
-
+# Parse the OSM URL to extract center lat/lon/zoom
 def parse_osm_center(url):
-    """
-    Read center lat, lon, zoom from a URL like:
-    https://www.openstreetmap.org/#map=17/19.1320/72.9150
-    """
     parsed = urlparse(url)
     frag = parsed.fragment
     lat = 19.1320
@@ -63,43 +56,29 @@ def parse_osm_center(url):
                 lat = float(parts[1])
                 lon = float(parts[2])
             except ValueError:
+                # If parsing fails, just keep the default IITB center
                 pass
-
     return lat, lon, zoom
 
-
+# Convert center to a small bounding box around IITB
 def center_to_bbox(lat, lon, zoom):
-    """
-    Make a small bounding box around the center point.
-    This should roughly cover IITB campus.
-    """
     dlat = 0.005
     dlon = 0.005 / max(0.1, math.cos(math.radians(lat)))
-
     min_lat = lat - dlat
     max_lat = lat + dlat
     min_lon = lon - dlon
     max_lon = lon + dlon
     return min_lat, min_lon, max_lat, max_lon
 
-
+# Query Overpass for all highway-type ways in the bounding box
 def fetch_osm_road_network(bbox):
-    """Ask Overpass for all highway=* ways and their nodes inside the box."""
     min_lat, min_lon, max_lat, max_lon = bbox
-
-    query = textwrap.dedent(f"""
-    [out:json][timeout:25];
-    (
-      way["highway"]({min_lat},{min_lon},{max_lat},{max_lon});
-    );
-    (._;>;);
-    out body;
-    """).strip()
-
+    query = textwrap.dedent(f"""[out:json][timeout:25];(way["highway"]({min_lat},{min_lon},{max_lat},{max_lon}););(._;>;);out body;""").strip()
     resp = requests.post(OVERPASS_URL, data={"data": query})
     resp.raise_for_status()
     return resp.json()
 
+# Rough mapping from OSM highway tag to (our road_type, base speed in km/h)
 ROAD_SPEED_TABLE = {
     "motorway": ("expressway", 70),
     "motorway_link": ("expressway", 60),
@@ -117,35 +96,26 @@ ROAD_SPEED_TABLE = {
 }
 
 
+# Turn Overpass JSON into our graph.json format
 def build_graph_from_overpass(osm_data):
-    """
-    Turn Overpass JSON into graph with fields:
-      nodes: id, lat, lon, pois
-      edges: id, u, v, length, average_time, speed_profiles, oneway, road_type, is_removed
-    """
     elements = osm_data.get("elements", [])
-
     node_elems = {}
     way_elems = []
-
-    for el in elements:
-        if el.get("type") == "node":
-            node_elems[el["id"]] = el
-        elif el.get("type") == "way":
-            way_elems.append(el)
-
+    for i in elements:
+        if i.get("type") == "node":
+            node_elems[i["id"]] = i
+        elif i.get("type") == "way":
+            way_elems.append(i)
     graph_nodes = []
     osm_to_idx = {}
-
+    
+    # Map OSM node id -> compact 0..N-1 index in our nodes array
     def get_or_create_node(osm_id):
-        """Return index of node in graph_nodes; create if not present."""
         if osm_id in osm_to_idx:
             return osm_to_idx[osm_id]
-
         n = node_elems.get(osm_id)
         if n is None:
             return None
-
         idx = len(graph_nodes)
         node_obj = {
             "id": idx,
@@ -160,7 +130,6 @@ def build_graph_from_overpass(osm_data):
     graph_edges = []
     next_eid = 0
     speed_prof = make_speed_profile(24)
-
     for w in way_elems:
         tags = w.get("tags", {})
         highway = tags.get("highway")
@@ -168,27 +137,21 @@ def build_graph_from_overpass(osm_data):
             continue
         if highway not in ROAD_SPEED_TABLE:
             continue
-
         road_type, base_speed_kmh = ROAD_SPEED_TABLE[highway]
         oneway = tags.get("oneway") in ("yes", "true", "1")
-
         node_ids = w.get("nodes", [])
         if len(node_ids) < 2:
             continue
-
         for u_osm, v_osm in zip(node_ids[:-1], node_ids[1:]):
             u_idx = get_or_create_node(u_osm)
             v_idx = get_or_create_node(v_osm)
             if u_idx is None or v_idx is None:
                 continue
-
             u = graph_nodes[u_idx]
             v = graph_nodes[v_idx]
-
-            length_m = haversine(u["lat"], u["lon"], v["lat"], v["lon"])
+            length_m = sine_square_half(u["lat"], u["lon"], v["lat"], v["lon"])
             if length_m <= 0:
                 continue
-
             base_speed_ms = base_speed_kmh * 1000.0 / 3600.0
             factor = random.uniform(0.8, 1.2)
             eff_speed_ms = max(1.0, base_speed_ms * factor)
@@ -213,13 +176,11 @@ def build_graph_from_overpass(osm_data):
             add_edge(u_idx, v_idx)
             if not oneway:
                 add_edge(v_idx, u_idx)
-
     meta = {
         "id": "iitb_osm",
         "nodes": len(graph_nodes),
         "description": "IIT Bombay graph from OSM (roads only)",
     }
-
     return {
         "meta": meta,
         "nodes": graph_nodes,
@@ -227,17 +188,14 @@ def build_graph_from_overpass(osm_data):
     }
 
 
+#Generate a small mix of shortest_path / KNN queries for Phase-1.
 def make_queries(graph, num_queries=25, seed=42):
-    """Make 25 mixed queries: shortest_path + KNN."""
     random.seed(seed)
-
     nodes = graph["nodes"]
     edges = graph["edges"]
     events = []
-
     if not nodes or not edges:
         return {"meta": {"id": "empty"}, "events": []}
-
     node_ids = [n["id"] for n in nodes]
     road_types = list({e["road_type"] for e in edges})
 
@@ -246,21 +204,17 @@ def make_queries(graph, num_queries=25, seed=42):
 
     qid = 0
     modes = ["distance", "time"]
-
     for _ in range(num_queries):
         r = random.random()
-
         if r < 0.4:
             s = rand_node()
             t = rand_node()
             while t == s:
                 t = rand_node()
-
             constraints = {}
             if road_types and random.random() < 0.3:
                 k = random.randint(1, min(2, len(road_types)))
                 constraints["forbidden_road_types"] = random.sample(road_types, k)
-
             events.append({
                 "type": "shortest_path",
                 "id": qid,
@@ -269,7 +223,6 @@ def make_queries(graph, num_queries=25, seed=42):
                 "mode": random.choice(modes),
                 "constraints": constraints,
             })
-
         elif r < 0.7:
             base_node = nodes[rand_node()]
             events.append({
@@ -280,15 +233,12 @@ def make_queries(graph, num_queries=25, seed=42):
                 "q_lon": base_node["lon"],
                 "poi": "Restaurant",
             })
-
         else:
             base_node = nodes[rand_node()]
-
             constraints = {}
             if road_types and random.random() < 0.3:
                 kf = random.randint(1, min(2, len(road_types)))
                 constraints["forbidden_road_types"] = random.sample(road_types, kf)
-
             events.append({
                 "type": "knn_by_shortestpath",
                 "id": qid,
@@ -298,54 +248,42 @@ def make_queries(graph, num_queries=25, seed=42):
                 "poi": "Restaurant",
                 "constraints": constraints,
             })
-
         qid += 1
-
     return {
         "meta": {"id": "iitb_osm_queries"},
         "events": events,
     }
 
 
+# we only produce graph.json and queries.json; we don't run phase1.
 def main():
-    if len(sys.argv) != 3:
-        print("Usage: python3 generate_testcase.py <phase1_exe> <outdir>")
+    if len(sys.argv) != 2:
+        print("Usage: python3 generate_testcase.py <outdir>")
         sys.exit(1)
+    outdir = sys.argv[1]
 
-    exe_path = sys.argv[1]
-    outdir = sys.argv[2]
-
-    # 1) find IITB center and bbox
+    # 1) Find IITB center and bounding box
     lat, lon, zoom = parse_osm_center(IITB_OSM_URL)
     bbox = center_to_bbox(lat, lon, zoom)
 
-    # 2) download OSM data
+    # 2) Download OSM data
     print("Downloading IITB roads from Overpass...")
     osm_data = fetch_osm_road_network(bbox)
 
-    # 3) build graph.json
+    # 3) Build graph.json
     print("Building graph.json ...")
     graph = build_graph_from_overpass(osm_data)
     graph_path = os.path.join(outdir, "graph.json")
     write_json(graph_path, graph)
     print(f"Graph: {len(graph['nodes'])} nodes, {len(graph['edges'])} edges")
 
-    # 4) build queries.json
+    # 4) Build queries.json
     print("Building queries.json ...")
     queries = make_queries(graph, num_queries=25)
     queries_path = os.path.join(outdir, "queries.json")
     write_json(queries_path, queries)
     print(f"Queries: {len(queries['events'])} events")
-
-    # 5) run phase1 executable
-    output_path = os.path.join(outdir, "output.json")
-    try:
-        print("Running phase1 ...")
-        subprocess.check_call([exe_path, graph_path, queries_path, output_path])
-        print("Done, output.json written.")
-    except Exception as e:
-        print("Could not run phase1:", e)
-
+    print("Done. Generated graph.json and queries.json only.")
 
 if __name__ == "__main__":
     main()

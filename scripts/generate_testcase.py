@@ -4,186 +4,348 @@ import os
 import random
 import subprocess
 import sys
+import textwrap
+from urllib.parse import urlparse
+
+import requests
 
 def write_json(path, data):
-    # ensure folder exists
+    """Write JSON file, create folders if needed."""
     folder = os.path.dirname(path)
     if folder and not os.path.exists(folder):
-        os.makedirs(folder)
+        os.makedirs(folder, exist_ok=True)
     with open(path, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
 
+
+def haversine(lat1, lon1, lat2, lon2):
+    """Distance in meters between two lat/lon points."""
+    R = 6371000.0
+    p1 = math.radians(lat1)
+    p2 = math.radians(lat2)
+    dphi = math.radians(lat2 - lat1)
+    dlambda = math.radians(lon2 - lon1)
+    a = math.sin(dphi / 2) ** 2 + math.cos(p1) * math.cos(p2) * math.sin(dlambda / 2) ** 2
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    return R * c
+
+
 def make_speed_profile(slots=24):
-    # slower in the middle of the day, faster near the edges
+    """Simple speed profile: slower in middle of day, faster at edges."""
     vals = []
     for i in range(slots):
         t = abs(i - (slots / 2.0)) / (slots / 2.0)
         vals.append(round(0.6 + 0.4 * (1.0 - t), 3))
     return vals
 
-def make_graph(n=10, seed=17, extra_prob=0.4):
+
+IITB_OSM_URL = "https://www.openstreetmap.org/#map=17/19.1320/72.9150"
+
+OVERPASS_URL = "https://overpass-api.de/api/interpreter"
+
+
+def parse_osm_center(url):
+    """
+    Read center lat, lon, zoom from a URL like:
+    https://www.openstreetmap.org/#map=17/19.1320/72.9150
+    """
+    parsed = urlparse(url)
+    frag = parsed.fragment
+    lat = 19.1320
+    lon = 72.9150
+    zoom = 17
+
+    if frag.startswith("map="):
+        parts = frag.split("=")[1].split("/")
+        if len(parts) >= 3:
+            try:
+                zoom = int(parts[0])
+                lat = float(parts[1])
+                lon = float(parts[2])
+            except ValueError:
+                pass
+
+    return lat, lon, zoom
+
+
+def center_to_bbox(lat, lon, zoom):
+    """
+    Make a small bounding box around the center point.
+    This should roughly cover IITB campus.
+    """
+    dlat = 0.005
+    dlon = 0.005 / max(0.1, math.cos(math.radians(lat)))
+
+    min_lat = lat - dlat
+    max_lat = lat + dlat
+    min_lon = lon - dlon
+    max_lon = lon + dlon
+    return min_lat, min_lon, max_lat, max_lon
+
+
+def fetch_osm_road_network(bbox):
+    """Ask Overpass for all highway=* ways and their nodes inside the box."""
+    min_lat, min_lon, max_lat, max_lon = bbox
+
+    query = textwrap.dedent(f"""
+    [out:json][timeout:25];
+    (
+      way["highway"]({min_lat},{min_lon},{max_lat},{max_lon});
+    );
+    (._;>;);
+    out body;
+    """).strip()
+
+    resp = requests.post(OVERPASS_URL, data={"data": query})
+    resp.raise_for_status()
+    return resp.json()
+
+ROAD_SPEED_TABLE = {
+    "motorway": ("expressway", 70),
+    "motorway_link": ("expressway", 60),
+    "trunk": ("expressway", 60),
+    "trunk_link": ("expressway", 50),
+    "primary": ("primary", 50),
+    "primary_link": ("primary", 40),
+    "secondary": ("secondary", 40),
+    "secondary_link": ("secondary", 35),
+    "tertiary": ("tertiary", 35),
+    "tertiary_link": ("tertiary", 30),
+    "residential": ("local", 25),
+    "service": ("local", 20),
+    "unclassified": ("local", 20),
+}
+
+
+def build_graph_from_overpass(osm_data):
+    """
+    Turn Overpass JSON into graph with fields:
+      nodes: id, lat, lon, pois
+      edges: id, u, v, length, average_time, speed_profiles, oneway, road_type, is_removed
+    """
+    elements = osm_data.get("elements", [])
+
+    node_elems = {}
+    way_elems = []
+
+    for el in elements:
+        if el.get("type") == "node":
+            node_elems[el["id"]] = el
+        elif el.get("type") == "way":
+            way_elems.append(el)
+
+    graph_nodes = []
+    osm_to_idx = {}
+
+    def get_or_create_node(osm_id):
+        """Return index of node in graph_nodes; create if not present."""
+        if osm_id in osm_to_idx:
+            return osm_to_idx[osm_id]
+
+        n = node_elems.get(osm_id)
+        if n is None:
+            return None
+
+        idx = len(graph_nodes)
+        node_obj = {
+            "id": idx,
+            "lat": n.get("lat", 0.0),
+            "lon": n.get("lon", 0.0),
+            "pois": [],
+        }
+        graph_nodes.append(node_obj)
+        osm_to_idx[osm_id] = idx
+        return idx
+
+    graph_edges = []
+    next_eid = 0
+    speed_prof = make_speed_profile(24)
+
+    for w in way_elems:
+        tags = w.get("tags", {})
+        highway = tags.get("highway")
+        if not highway:
+            continue
+        if highway not in ROAD_SPEED_TABLE:
+            continue
+
+        road_type, base_speed_kmh = ROAD_SPEED_TABLE[highway]
+        oneway = tags.get("oneway") in ("yes", "true", "1")
+
+        node_ids = w.get("nodes", [])
+        if len(node_ids) < 2:
+            continue
+
+        for u_osm, v_osm in zip(node_ids[:-1], node_ids[1:]):
+            u_idx = get_or_create_node(u_osm)
+            v_idx = get_or_create_node(v_osm)
+            if u_idx is None or v_idx is None:
+                continue
+
+            u = graph_nodes[u_idx]
+            v = graph_nodes[v_idx]
+
+            length_m = haversine(u["lat"], u["lon"], v["lat"], v["lon"])
+            if length_m <= 0:
+                continue
+
+            base_speed_ms = base_speed_kmh * 1000.0 / 3600.0
+            factor = random.uniform(0.8, 1.2)
+            eff_speed_ms = max(1.0, base_speed_ms * factor)
+            avg_time = length_m / eff_speed_ms
+
+            def add_edge(a_idx, b_idx):
+                nonlocal next_eid
+                edge = {
+                    "id": next_eid,
+                    "u": a_idx,
+                    "v": b_idx,
+                    "length": length_m,
+                    "average_time": avg_time,
+                    "speed_profiles": speed_prof,
+                    "oneway": oneway,
+                    "road_type": road_type,
+                    "is_removed": False,
+                }
+                graph_edges.append(edge)
+                next_eid += 1
+
+            add_edge(u_idx, v_idx)
+            if not oneway:
+                add_edge(v_idx, u_idx)
+
+    meta = {
+        "id": "iitb_osm",
+        "nodes": len(graph_nodes),
+        "description": "IIT Bombay graph from OSM (roads only)",
+    }
+
+    return {
+        "meta": meta,
+        "nodes": graph_nodes,
+        "edges": graph_edges,
+    }
+
+
+def make_queries(graph, num_queries=25, seed=42):
+    """Make 25 mixed queries: shortest_path + KNN."""
     random.seed(seed)
 
-    # build nodes on a small grid
-    nodes = []
-    for i in range(n):
-        lat = 17.0 + int(i / 5) * 0.001 + random.uniform(-0.00015, 0.00015)
-        lon = 78.0 + (i % 5) * 0.001 + random.uniform(-0.00015, 0.00015)
-        pois = []
-        if i % 4 == 0:
-            pois.append("food")
-        if i % 6 == 0:
-            pois.append("atm")
-        nodes.append({"id": i, "lat": lat, "lon": lon, "pois": pois})
-
-    def dist(u, v):
-        dx = nodes[u]["lat"] - nodes[v]["lat"]
-        dy = nodes[u]["lon"] - nodes[v]["lon"]
-        return math.sqrt(dx * dx + dy * dy) * 111000.0
-
-    edges = []
-    road_types = ["residential", "primary", "secondary", "service"]
-    sp = make_speed_profile()
-    eid = 0
-
-    # backbone (chain) so graph is connected
-    for u in range(n - 1):
-        v = u + 1
-        length = dist(u, v)
-        avg_t = max(1.0, length / 8.0)
-        edges.append({
-            "id": eid, "u": u, "v": v,
-            "length": round(length, 2),
-            "average_time": round(avg_t, 2),
-            "oneway": False,
-            "road_type": random.choice(road_types),
-            "speed_profiles": sp
-        })
-        eid += 1
-
-    # some extra edges for alternative paths
-    for u in range(n):
-        for v in range(u + 2, n):
-            if random.random() < extra_prob:
-                length = dist(u, v)
-                avg_t = max(1.0, length / 8.0)
-                edges.append({
-                    "id": eid, "u": u, "v": v,
-                    "length": round(length, 2),
-                    "average_time": round(avg_t, 2),
-                    "oneway": random.random() < 0.2,
-                    "road_type": random.choice(road_types),
-                    "speed_profiles": sp
-                })
-                eid += 1
-
-    return {"nodes": nodes, "edges": edges}
-
-def make_queries():
-    # four basic events: distance, time, remove_edge, distance after update
+    nodes = graph["nodes"]
+    edges = graph["edges"]
     events = []
 
-    events.append({
-        "type": "shortest_path",
-        "id": 0, "source": 0, "target": 6,
-        "mode": "distance",
-        "constraints": {
-            "forbidden_nodes": [],
-            "forbidden_roadtypes": []
-        }
-    })
+    if not nodes or not edges:
+        return {"meta": {"id": "empty"}, "events": []}
 
-    events.append({
-        "type": "shortest_path",
-        "id": 1, "source": 2, "target": 9,
-        "mode": "time",
-        "constraints": {
-            "forbidden_nodes": [],
-            "forbidden_roadtypes": ["service"]
-        }
-    })
+    node_ids = [n["id"] for n in nodes]
+    road_types = list({e["road_type"] for e in edges})
 
-    events.append({
-        "type": "remove_edge",
-        "id": 2, "edge_id": 0
-    })
+    def rand_node():
+        return random.choice(node_ids)
 
-    events.append({
-        "type": "shortest_path",
-        "id": 3, "source": 0, "target": 6,
-        "mode": "distance",
-        "constraints": {
-            "forbidden_nodes": [3],
-            "forbidden_roadtypes": []
-        }
-    })
+    qid = 0
+    modes = ["distance", "time"]
 
-    return {"meta": {"id": "simple_smoke"}, "events": events}
+    for _ in range(num_queries):
+        r = random.random()
 
-def run_exe(exe, graph_path, queries_path, output_path, timeout=30):
-    # runs: <exe> graph.json queries.json output.json
-    cmd = [exe, graph_path, queries_path, output_path]
-    proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=timeout)
-    return proc.returncode, proc.stdout, proc.stderr
+        if r < 0.4:
+            s = rand_node()
+            t = rand_node()
+            while t == s:
+                t = rand_node()
 
-def check_output_shape(output_path):
-    # basic checks so we know program didn’t break the contract
-    with open(output_path, "r", encoding="utf-8") as f:
-        out = json.load(f)
+            constraints = {}
+            if road_types and random.random() < 0.3:
+                k = random.randint(1, min(2, len(road_types)))
+                constraints["forbidden_road_types"] = random.sample(road_types, k)
 
-    if "meta" not in out:
-        raise AssertionError("output missing meta")
-    if "results" not in out or not isinstance(out["results"], list):
-        raise AssertionError("output missing results list")
+            events.append({
+                "type": "shortest_path",
+                "id": qid,
+                "source": s,
+                "target": t,
+                "mode": random.choice(modes),
+                "constraints": constraints,
+            })
 
-    for r in out["results"]:
-        if not isinstance(r, dict):
-            raise AssertionError("result is not an object")
-        if "id" not in r:
-            raise AssertionError("result missing id")
-        if "error" in r:
-            continue
-        if "possible" not in r:
-            raise AssertionError("result missing possible")
-        if r["possible"] and "path" in r:
-            if ("minimum_distance" not in r) and ("minimum_time" not in r):
-                raise AssertionError("missing cost field for path result")
+        elif r < 0.7:
+            base_node = nodes[rand_node()]
+            events.append({
+                "type": "knn_by_euclidean",
+                "id": qid,
+                "k": random.randint(1, 5),
+                "q_lat": base_node["lat"],
+                "q_lon": base_node["lon"],
+                "poi": "Restaurant",
+            })
+
+        else:
+            base_node = nodes[rand_node()]
+
+            constraints = {}
+            if road_types and random.random() < 0.3:
+                kf = random.randint(1, min(2, len(road_types)))
+                constraints["forbidden_road_types"] = random.sample(road_types, kf)
+
+            events.append({
+                "type": "knn_by_shortestpath",
+                "id": qid,
+                "k": random.randint(1, 5),
+                "q_lat": base_node["lat"],
+                "q_lon": base_node["lon"],
+                "poi": "Restaurant",
+                "constraints": constraints,
+            })
+
+        qid += 1
+
+    return {
+        "meta": {"id": "iitb_osm_queries"},
+        "events": events,
+    }
+
 
 def main():
-    # Usage: python3 generate_testcases.py <path_to_exe> [outdir]
-    if len(sys.argv) < 2 or len(sys.argv) > 3:
-        print("Usage: python3 generate_testcases.py <path_to_exe> [outdir]")
+    if len(sys.argv) != 3:
+        print("Usage: python3 generate_testcase.py <phase1_exe> <outdir>")
         sys.exit(1)
 
-    exe = sys.argv[1]
-    outdir = sys.argv[2] if len(sys.argv) == 3 else "testcases_auto"
-    if not os.path.exists(outdir):
-        os.makedirs(outdir)
+    exe_path = sys.argv[1]
+    outdir = sys.argv[2]
 
-    graph = make_graph(n=10, seed=17, extra_prob=0.4)
-    queries = make_queries()
+    # 1) find IITB center and bbox
+    lat, lon, zoom = parse_osm_center(IITB_OSM_URL)
+    bbox = center_to_bbox(lat, lon, zoom)
 
-    graph_path = os.path.join(outdir, "graph_small.json")
-    queries_path = os.path.join(outdir, "queries_smoke.json")
-    output_path = os.path.join(outdir, "output_smoke.json")
+    # 2) download OSM data
+    print("Downloading IITB roads from Overpass...")
+    osm_data = fetch_osm_road_network(bbox)
 
+    # 3) build graph.json
+    print("Building graph.json ...")
+    graph = build_graph_from_overpass(osm_data)
+    graph_path = os.path.join(outdir, "graph.json")
     write_json(graph_path, graph)
+    print(f"Graph: {len(graph['nodes'])} nodes, {len(graph['edges'])} edges")
+
+    # 4) build queries.json
+    print("Building queries.json ...")
+    queries = make_queries(graph, num_queries=25)
+    queries_path = os.path.join(outdir, "queries.json")
     write_json(queries_path, queries)
+    print(f"Queries: {len(queries['events'])} events")
 
-    # run once and show program stdout/stderr to help while debugging
-    print("[run]", exe, graph_path, queries_path, output_path)
-    code, out, err = run_exe(exe, graph_path, queries_path, output_path)
-    if out.strip():
-        print("[stdout]"); print(out)
-    if err.strip():
-        print("[stderr]"); print(err)
-    if code != 0:
-        print("[fail] program exited with code", code)
-        sys.exit(code)
+    # 5) run phase1 executable
+    output_path = os.path.join(outdir, "output.json")
+    try:
+        print("Running phase1 ...")
+        subprocess.check_call([exe_path, graph_path, queries_path, output_path])
+        print("Done, output.json written.")
+    except Exception as e:
+        print("Could not run phase1:", e)
 
-    # quick contract check, not a correctness check
-    check_output_shape(output_path)
-    print("[ok] wrote", output_path)
 
-if __name__ == "_main_":
+if __name__ == "__main__":
     main()

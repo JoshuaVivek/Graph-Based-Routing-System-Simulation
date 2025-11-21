@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <unordered_set>
 #include <map>
-
 #include "kshortest.h"
 
 // Defining a  infinite distance (distances that are large or unreachable)
@@ -131,11 +130,9 @@ std::vector<Path> KShortestPathsExact::compute(int source, int target, int k) {
         
         // Loop over all nodes in the previous path, except the target
         for (size_t j = 0; j < previous_path.nodes.size() - 1; ++j) {
-            
             int spur_node_id = previous_path.nodes[j];
             
-            // --- Part 1: Root Path (Prefix) ---
-            // The root path goes from the source to the spur node.
+            // The root path goes from the source to spur node
             // We need its length and list of node IDs.
             std::vector<int> root_path_nodes;
             double root_path_length = 0.0;
@@ -143,14 +140,15 @@ std::vector<Path> KShortestPathsExact::compute(int source, int target, int k) {
             // Accumulate root path nodes and length
             for (size_t node_index = 0; node_index <= j; ++node_index) {
                 root_path_nodes.push_back(previous_path.nodes[node_index]);
-                // Accumulate length up to the spur node (only count edges *before* spur node)
+
+                // Accumulate length up to the spur node (only count edges before spur node)
                 if (node_index < j) {
                     int u_id = previous_path.nodes[node_index];
                     int v_id = previous_path.nodes[node_index+1];
-                    // Find edge length: This requires a lookup from node IDs to the edge index/data
+
+                    // Find edge length between u_id and v_id
                     int u_idx = g.node_id_Nodes_index.at(u_id);
                     int v_idx = g.node_id_Nodes_index.at(v_id);
-
                     for(const auto& edge_pair : g.adj_list[u_idx]) {
                         if(edge_pair.first == v_idx) {
                             root_path_length += g.all_Edges[edge_pair.second].length;
@@ -160,8 +158,6 @@ std::vector<Path> KShortestPathsExact::compute(int source, int target, int k) {
                 }
             }
             
-            // --- Part 2: Block Nodes and Edges ---
-            
             // Block all nodes in the root path (except the spur node itself)
             std::vector<bool> blocked_nodes_temp(num_nodes, false);
             for (size_t node_index = 0; node_index < j; ++node_index) {
@@ -169,9 +165,8 @@ std::vector<Path> KShortestPathsExact::compute(int source, int target, int k) {
                 blocked_nodes_temp[g.node_id_Nodes_index.at(node_id)] = true;
             }
             
-            // Block the specific edge from the root path of A[i-1] leaving the spur node.
-            // AND block all edges leaving the spur node that are prefixes of any path in A 
-            // that share the same root path. This ensures diversity.
+            // Block the specific edge from the root path of A[i-1] leaving the spur node and 
+            // block all edges leaving the spur node that are prefixes of any path in A that share the same root path
             std::vector<bool> blocked_edges_temp(num_edges, false);
             for (const auto& existing_path : A) {
                 // Check if existing_path in A shares the same root prefix up to the spur node.
@@ -201,19 +196,12 @@ std::vector<Path> KShortestPathsExact::compute(int source, int target, int k) {
                     }
                 }
             }
-
-            // --- Part 3: Find Spur Path ---
             
             // Find the shortest path from the spur node to the target in the temporarily modified graph.
             Path spur_path = shortest_path(spur_node_id, target, blocked_nodes_temp, blocked_edges_temp);
-            
-            // --- Part 4: Combine Paths to Make a Candidate ---
-            
             if (spur_path.length != INFINITY_DISTANCE) {
                 // Total path = Root path + Spur path
                 Path candidate_path;
-                
-                // Add all root path nodes (they form the non-spur part)
                 candidate_path.nodes = root_path_nodes;
                 
                 // Add spur path nodes, skipping the first one (the spur node itself)
@@ -227,9 +215,9 @@ std::vector<Path> KShortestPathsExact::compute(int source, int target, int k) {
                 // Add the new candidate to the queue B
                 B.push({candidate_path.length, candidate_path});
             }
-        } // End of loop over spur nodes (j)
+        }
 
-        // 3. Find the best unique candidate from B and add it to A.
+        // Find the best unique candidate from B and add it to A.
         while (!B.empty()) {
             Path best_candidate = B.top().second;
             B.pop();

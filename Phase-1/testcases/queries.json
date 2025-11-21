@@ -1,0 +1,296 @@
+{
+  "meta": {
+    "id": "iitb_osm_queries"
+  },
+  "events": [
+    {
+      "type": "knn",
+      "id": 0,
+      "poi": "petrol station",
+      "query_point": {
+        "lat": 19.1371384,
+        "lon": 72.9149981
+      },
+      "k": 2,
+      "metric": "shortest_path"
+    },
+    {
+      "type": "shortest_path",
+      "id": 1,
+      "source": 52,
+      "target": 346,
+      "mode": "time",
+      "constraints": {
+        "forbidden_nodes": [],
+        "forbidden_road_types": []
+      }
+    },
+    {
+      "type": "shortest_path",
+      "id": 2,
+      "source": 47,
+      "target": 111,
+      "mode": "time",
+      "constraints": {
+        "forbidden_nodes": [
+          289
+        ],
+        "forbidden_road_types": [
+          "local",
+          "primary"
+        ]
+      }
+    },
+    {
+      "type": "knn",
+      "id": 3,
+      "poi": "atm",
+      "query_point": {
+        "lat": 19.1276335,
+        "lon": 72.9191866
+      },
+      "k": 4,
+      "metric": "euclidean"
+    },
+    {
+      "type": "shortest_path",
+      "id": 4,
+      "source": 79,
+      "target": 110,
+      "mode": "distance",
+      "constraints": {
+        "forbidden_nodes": [],
+        "forbidden_road_types": []
+      }
+    },
+    {
+      "type": "shortest_path",
+      "id": 5,
+      "source": 183,
+      "target": 433,
+      "mode": "distance",
+      "constraints": {
+        "forbidden_nodes": [],
+        "forbidden_road_types": [
+          "primary"
+        ]
+      }
+    },
+    {
+      "type": "knn",
+      "id": 6,
+      "poi": "hotel",
+      "query_point": {
+        "lat": 19.1397279,
+        "lon": 72.9178275
+      },
+      "k": 3,
+      "metric": "euclidean"
+    },
+    {
+      "type": "knn",
+      "id": 7,
+      "poi": "hotel",
+      "query_point": {
+        "lat": 19.1295842,
+        "lon": 72.9149616
+      },
+      "k": 2,
+      "metric": "shortest_path"
+    },
+    {
+      "type": "knn",
+      "id": 8,
+      "poi": "hospital",
+      "query_point": {
+        "lat": 19.1376324,
+        "lon": 72.9172403
+      },
+      "k": 1,
+      "metric": "euclidean"
+    },
+    {
+      "type": "knn",
+      "id": 9,
+      "poi": "pharmacy",
+      "query_point": {
+        "lat": 19.129783,
+        "lon": 72.9192578
+      },
+      "k": 3,
+      "metric": "euclidean"
+    },
+    {
+      "type": "shortest_path",
+      "id": 10,
+      "source": 427,
+      "target": 186,
+      "mode": "distance",
+      "constraints": {
+        "forbidden_nodes": [
+          107,
+          344
+        ],
+        "forbidden_road_types": [
+          "local"
+        ]
+      }
+    },
+    {
+      "type": "shortest_path",
+      "id": 11,
+      "source": 194,
+      "target": 138,
+      "mode": "distance",
+      "constraints": {
+        "forbidden_nodes": [],
+        "forbidden_road_types": []
+      }
+    },
+    {
+      "type": "knn",
+      "id": 12,
+      "poi": "petrol station",
+      "query_point": {
+        "lat": 19.129058,
+        "lon": 72.9163926
+      },
+      "k": 1,
+      "metric": "euclidean"
+    },
+    {
+      "type": "knn",
+      "id": 13,
+      "poi": "restaurant",
+      "query_point": {
+        "lat": 19.1404246,
+        "lon": 72.9167847
+      },
+      "k": 2,
+      "metric": "shortest_path"
+    },
+    {
+      "type": "knn",
+      "id": 14,
+      "poi": "petrol station",
+      "query_point": {
+        "lat": 19.127358,
+        "lon": 72.917978
+      },
+      "k": 4,
+      "metric": "shortest_path"
+    },
+    {
+      "type": "shortest_path",
+      "id": 15,
+      "source": 468,
+      "target": 329,
+      "mode": "time",
+      "constraints": {
+        "forbidden_nodes": [],
+        "forbidden_road_types": [
+          "primary"
+        ]
+      }
+    },
+    {
+      "type": "knn",
+      "id": 16,
+      "poi": "petrol station",
+      "query_point": {
+        "lat": 19.1402942,
+        "lon": 72.9168661
+      },
+      "k": 2,
+      "metric": "shortest_path"
+    },
+    {
+      "type": "knn",
+      "id": 17,
+      "poi": "restaurant",
+      "query_point": {
+        "lat": 19.1319831,
+        "lon": 72.9182609
+      },
+      "k": 2,
+      "metric": "euclidean"
+    },
+    {
+      "type": "knn",
+      "id": 18,
+      "poi": "hotel",
+      "query_point": {
+        "lat": 19.1284067,
+        "lon": 72.9194974
+      },
+      "k": 1,
+      "metric": "shortest_path"
+    },
+    {
+      "type": "shortest_path",
+      "id": 19,
+      "source": 305,
+      "target": 239,
+      "mode": "distance",
+      "constraints": {
+        "forbidden_nodes": [],
+        "forbidden_road_types": []
+      }
+    },
+    {
+      "type": "knn",
+      "id": 20,
+      "poi": "atm",
+      "query_point": {
+        "lat": 19.1344056,
+        "lon": 72.9179074
+      },
+      "k": 3,
+      "metric": "shortest_path"
+    },
+    {
+      "type": "shortest_path",
+      "id": 21,
+      "source": 222,
+      "target": 80,
+      "mode": "time",
+      "constraints": {
+        "forbidden_nodes": [],
+        "forbidden_road_types": []
+      }
+    },
+    {
+      "type": "knn",
+      "id": 22,
+      "poi": "hotel",
+      "query_point": {
+        "lat": 19.128852,
+        "lon": 72.9205581
+      },
+      "k": 1,
+      "metric": "euclidean"
+    },
+    {
+      "type": "knn",
+      "id": 23,
+      "poi": "petrol station",
+      "query_point": {
+        "lat": 19.1324685,
+        "lon": 72.9148833
+      },
+      "k": 3,
+      "metric": "euclidean"
+    },
+    {
+      "type": "knn",
+      "id": 24,
+      "poi": "hotel",
+      "query_point": {
+        "lat": 19.1285047,
+        "lon": 72.9181132
+      },
+      "k": 3,
+      "metric": "euclidean"
+    }
+  ]
+}

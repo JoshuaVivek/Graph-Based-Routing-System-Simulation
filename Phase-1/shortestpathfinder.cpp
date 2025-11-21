@@ -214,25 +214,31 @@ Shortestpath shortestpath_by_time(Graph& g,Constraints constraints,int source_id
                 travel_time = edge.average_time;
             } else{
             //vector<double> times(96,0);
-            double true_time=0;
-            double times;
-            double distance = edge.length;
-            for(int i=0;i<96;){
-                times=distance/sp[i];
-                if(times>900){
-                    true_time=true_time+900;
+                double distance = edge.length;
+                double current_time = time_taken[u]; // arrival time at current node
+                double true_time = 0;
+
+                while (distance > 0) {
+                    int slot = int(current_time / 900) % 96;
+                    double speed = sp[slot];
+
+                    double time_in_slot = 900 - (int(current_time) % 900);
+                    double dist_possible = speed * time_in_slot;
+
+                    if (dist_possible >= distance) {
+                    // Finishing in current slot
+                        double time_needed = distance / speed;
+                        true_time += time_needed;
+                        current_time += time_needed;
+                        break;
+                    } else {
+                    // Using whole slot, moving to the next
+                    true_time += time_in_slot;
+                    current_time += time_in_slot;
+                    distance -= dist_possible;
+                    }
                 }
-                else{
-                    true_time=true_time+times;
-                    break;
-                }
-                distance= distance - (sp[i]*900);
-                if(i==95){
-                    i=-1;
-                }
-                i++;
-            }
-            travel_time = true_time;
+                travel_time = true_time;
         }
 
 

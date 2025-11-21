@@ -37,7 +37,7 @@ json path_to_json(const vector<int> &path_nodes) {
 }
 
 int main(int argc, char **argv) {
-    // We expect 3 arguments strictly: Graph File, Query File, Output File.
+    // We expect 3 arguments strictly: Graph File, Query File, Output File
     if (argc != 4) {
         cerr << "Usage: " << argv[0] << " <graph.json> <queries.json> <output.json>" << endl;
         return 1;
@@ -87,9 +87,9 @@ int main(int argc, char **argv) {
             // Starting the timer
             auto start_time = chrono::high_resolution_clock::now();
 
-            // We will wrap individual queries in a try-catch block.
+            // We will wrap individual queries in a try-catch block
             // If one query fails, we will record the error
-            // but we will keep the program running for the other queries.
+            // but we will keep the program running for the other queries
             try {
                 
                 // K Shortest Paths (Exact)
@@ -197,7 +197,7 @@ int main(int argc, char **argv) {
 
     } 
     catch (const exception &e) {
-        // This catches global errors like file not found, JSON parse errors, etc.
+        // This catches global errors like file not found, JSON parse errors, etc...
         cerr << "Fatal Error: " << e.what() << endl;
         return 1;
     }

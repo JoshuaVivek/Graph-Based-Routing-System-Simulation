@@ -1,7 +1,6 @@
-#include "knn.h"
 #include<algorithm>
 #include<queue>
-
+#include "knn.h"
 
 double calc_euclidean_dist(double lat1,double lat2,double lon1,double lon2)
 {

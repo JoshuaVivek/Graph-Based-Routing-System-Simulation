@@ -1,7 +1,7 @@
 #pragma once
-#include "graph.h"
-#include <vector>
 
+#include <vector>
+#include "graph.h"
 struct HeuristicPath {
     std::vector<int> nodes;
     double length;

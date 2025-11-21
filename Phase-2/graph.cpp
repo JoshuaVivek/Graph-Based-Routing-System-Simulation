@@ -1,9 +1,9 @@
-#include "graph.h"
 #include <fstream>
 #include <iostream>
 #include <cmath>
 #include <stdexcept>
 #include <algorithm>
+#include "graph.h"
 
 //helper function
 double euclidean_dist(double lat1,double lat2,double lon1,double lon2) 

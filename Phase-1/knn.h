@@ -1,9 +1,9 @@
 #ifndef KNN_H
 #define KNN_H
 
+#include<vector>
 #include"graph.h"
 #include"shortestpathfinder.h"
-#include<vector>
 
 using namespace std;
 

@@ -151,19 +151,9 @@ Shortestpath shortestpath_by_time(Graph& g,Constraints constraints,int source_id
 {
     Shortestpath result;
     result.possible = false;
-    
-    // Step 1: Checking if source or target are in invalid nodes(in nodes they should not be present)
-    /*for(int i = 0; i < constraints.forbidden_nodes.size(); i++)
-    {
-        if(constraints.forbidden_nodes[i] == source_id || constraints.forbidden_nodes[i] == target_id)
-        {
-            return result; // Path not possible
-        }
-    }*/
    if(constraints.forbidden_nodes.count(source_id)>0 || constraints.forbidden_nodes.count(target_id)>0){
     return result;
    }
-
 
     // Step 2: Finding indices of source and target nodes
     if(g.node_id_Nodes_index.find(source_id) == g.node_id_Nodes_index.end() ||g.node_id_Nodes_index.find(target_id) == g.node_id_Nodes_index.end()) {
@@ -205,60 +195,48 @@ Shortestpath shortestpath_by_time(Graph& g,Constraints constraints,int source_id
         for(auto [v_index,i]: g.adj_list[u])
         {
             Edge edge = g.all_Edges[i];
-            
-            /*if(edge.is_removed)
-            {
-                continue; // Skip removed edges
-            }
-
-            int u_id = g.all_Nodes[u].id;
-            int v_index = -1;
-            
-            // Find which neighbor this edge leads to
-            if(edge.u == u_id)
-            {
-                v_index = g.node_id_Nodes_index[edge.v];
-            }
-            else if(edge.v == u_id && !edge.oneway)
-            {
-                v_index = g.node_id_Nodes_index[edge.u]; // Bidirectional edge
-            }
-            else
-            {
-                continue; // Edge doesn't start from u
-            }*/
+            vector<double> sp = edge.speed_profiles;
             
             // Step 6: Check if neighbor is forbidden
             int v_id = g.all_Nodes[v_index].id;
-            //bool is_forbidden = false;
-            /*for(int j = 0; j < constraints.forbidden_nodes.size(); j++)
-            {
-                if(constraints.forbidden_nodes[j] == v_id)
-                {
-                    is_forbidden = true;
-                    break;
-                }
-            }*/
             if(constraints.forbidden_nodes.count(v_id)>0){
                 continue;
             }
 
             // Step 7: Check if road type is forbidden
-            //bool road_forbidden = false;
-            /*for(int j = 0; j < constraints.forbidden_roadtypes.size(); j++)
-            {
-                if(constraints.forbidden_roadtypes[j] == edge.road_type)
-                {
-                    road_forbidden = true;
-                    break;
-                }
-            }*/
             if(constraints.forbidden_roadtypes.count(edge.road_type)>0){
                 continue;
             }
 
             // Step 8: Relax the edge (update time if shorter path found)
-            double new_time = time_taken[u] + edge.average_time;
+            double travel_time;
+            if(sp.empty()){
+                travel_time = edge.average_time;
+            } else{
+            //vector<double> times(96,0);
+            double true_time=0;
+            double times;
+            double distance = edge.length;
+            for(int i=0;i<96;){
+                times=distance/sp[i];
+                if(times>900){
+                    true_time=true_time+900;
+                }
+                else{
+                    true_time=true_time+times;
+                    break;
+                }
+                distance= distance - (sp[i]*900);
+                if(i==95){
+                    i=-1;
+                }
+                i++;
+            }
+            travel_time = true_time;
+        }
+
+
+            double new_time = time_taken[u] + travel_time;
             if(new_time < time_taken[v_index])
             {
                 time_taken[v_index] = new_time;
@@ -296,5 +274,6 @@ Shortestpath shortestpath_by_time(Graph& g,Constraints constraints,int source_id
     
     return result;    
 }
+
 
 

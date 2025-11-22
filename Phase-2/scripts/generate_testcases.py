@@ -15,7 +15,7 @@ NEXT_NODE_ID = 0
 NEXT_EDGE_ID = 0
 
 # Points of Interest (POIs) to keep graph structure consistent
-POIS = ["restaurant", "library", "hostel", "lab", "gate"]
+POIS = ["restaurant", "petrol station", "hospital", "pharmacy", "hotel", "atm"]
 
 #Writes JSON data to file and creates directories as needed
 def write_json(path: str, data: Dict[str, Any]):
@@ -143,7 +143,7 @@ def generate_phase2_queries(all_nodes: List[Dict[str, Any]], n_shortest: int = 1
         target_node = random.choice(all_nodes)
         events.append({
             "id": qid,
-            "type": "k_shortest_path",
+            "type": "k_shortest_paths",
             "source": source_node["id"],
             "target": target_node["id"],
             "k": random.randint(2, 5)
@@ -156,7 +156,7 @@ def generate_phase2_queries(all_nodes: List[Dict[str, Any]], n_shortest: int = 1
         target_node = random.choice(all_nodes)
         events.append({
             "id": qid,
-            "type": "k_shortest_diverse_path",
+            "type": "k_shortest_paths_heuristic",
             "source": source_node["id"],
             "target": target_node["id"],
             "k": random.randint(2, 5),

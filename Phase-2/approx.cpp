@@ -75,6 +75,11 @@ json ApproxRouter::solve_batch(const json& query_object) {
 
         //Format Output Object
         if (dist != -1.0) {
+            /*json distance_obj;
+            distance_obj["source"]=src;
+            distance_obj["target"]=tgt;
+            distance_obj["approx_shortest_distance"]=dist;
+            output["distance"].push_back(distance_obj);*/
             output["distances"].push_back({
                 {"source", src},
                 {"target", tgt},

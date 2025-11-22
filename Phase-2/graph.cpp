@@ -122,7 +122,7 @@ bool Graph::modify_edge(int edge_id,json& patch)
     }
 
     int index=edge_id_Edges_index[edge_id];
-    Edge edge=all_Edges[index];
+    Edge& edge=all_Edges[index];
     //Finding index by the edge id
 
     edge.is_removed=false;

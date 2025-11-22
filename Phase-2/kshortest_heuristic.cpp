@@ -87,6 +87,17 @@ std::vector<HeuristicPath> KShortestPathsHeuristic::generate_candidates(int sour
                 continue;
             }
             
+            //Checking for cycles
+            int next_node_id = g.all_Nodes[v_idx].id;
+            bool is_cycle = false;
+            for (int existing_node : current_path.nodes) {
+                if (existing_node == next_node_id) {
+                    is_cycle = true;
+                    break;
+                }
+            }
+            if (is_cycle) continue;
+
             // Create the new path state for neighbor v
             PathState next_path;
             next_path.length = current_path.length + edge_weight;

@@ -8,7 +8,7 @@
 using namespace std;
 
 const double INF = 1e18;
-const double PI_RAD = 0.01745329251; // PI / 180 precomputed
+const double PI_RAD = 0.01745329251; // PI / 180 precomputed pi in radians
 
 // Priority Queue Structure: <f_score, node_index>
 typedef pair<double, int> PQElement;
@@ -35,12 +35,12 @@ double ApproxRouter::fast_euclidean_dist(int u_idx, int v_idx) {
 }
 
 json ApproxRouter::solve_batch(const json& query_object) {
-    // 1. Parse Input Keys strictly as per PDF/JSON Format
+    //Parsing Input Keys
     int q_id = query_object["id"];
     double budget_ms = query_object["time_budget_ms"];
     double error_pct = query_object["acceptable_error_pct"];
 
-    // 2. Prepare Output Object
+    //Prepare Output Object
     json output;
     output["id"] = q_id;
     output["distances"] = json::array();
@@ -48,22 +48,21 @@ json ApproxRouter::solve_batch(const json& query_object) {
     auto batch_start = chrono::high_resolution_clock::now();
 
     // Calculate Epsilon (Greedy Factor) based on allowed error
-    // If error is 5%, epsilon ~ 1.25. If 10%, epsilon ~ 1.5.
     double epsilon = 1.0 + (error_pct / 20.0); 
     if (epsilon < 1.1) epsilon = 1.1; 
     if (epsilon > 2.5) epsilon = 2.5;
 
-    // 3. Iterate over the "queries" array
+    //Iterate over the queries array
     for (const auto& q : query_object["queries"]) {
         int src = q["source"];
         int tgt = q["target"];
 
-        // Check time budget
+        //checking time budget
         auto now = chrono::high_resolution_clock::now();
         double elapsed = chrono::duration<double, milli>(now - batch_start).count();
         if (elapsed >= budget_ms) break;
 
-        // Validate IDs exist in graph
+        //Validate IDs exist in graph
         if (graph->node_id_Nodes_index.find(src) == graph->node_id_Nodes_index.end() || 
             graph->node_id_Nodes_index.find(tgt) == graph->node_id_Nodes_index.end()) {
             continue;
@@ -74,12 +73,12 @@ json ApproxRouter::solve_batch(const json& query_object) {
 
         double dist = find_weighted_astar(u_idx, v_idx, epsilon, batch_start, budget_ms);
 
-        // 4. Format Output Object
+        //Format Output Object
         if (dist != -1.0) {
             output["distances"].push_back({
                 {"source", src},
                 {"target", tgt},
-                {"approx_shortest_distance", dist}
+                {"approx_shortest_distance", dist},
             });
         }
     }
@@ -90,7 +89,6 @@ double ApproxRouter::find_weighted_astar(int start_idx, int end_idx, double epsi
                                          chrono::high_resolution_clock::time_point batch_start, 
                                          double budget_ms) {
     
-    // Increment token to simulate "clearing" the visited array in O(1)
     current_token++;
     
     // Min-Priority Queue
@@ -119,7 +117,6 @@ double ApproxRouter::find_weighted_astar(int start_idx, int end_idx, double epsi
 
         if (u == end_idx) return g_score[end_idx];
 
-        // Lazy Pruning (Skip stale entries)
         double h_u = fast_euclidean_dist(u, end_idx);
         double g_at_push = f_current - (epsilon * h_u);
         if (g_score[u] < g_at_push - 0.001) continue;

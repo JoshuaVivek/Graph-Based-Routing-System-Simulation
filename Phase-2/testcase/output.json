@@ -635,7 +635,7 @@
     {
       "id": 12,
       "paths": [],
-      "processing_time": 4
+      "processing_time": 3
     },
     {
       "id": 13,
@@ -1775,7 +1775,7 @@
         }
       ],
       "id": 20,
-      "processing_time": 1
+      "processing_time": 0
     },
     {
       "distances": [

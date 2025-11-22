@@ -27,7 +27,7 @@ def sine_square_half(lat1, lon1, lat2, lon2):
     return R * c
 
 #For Generating a simple speed profile with higher speeds in the middle of the day
-def make_speed_profile(slots=24):
+def make_speed_profile(slots=96):
     vals = []
     for i in range(slots):
         t = abs(i - (slots / 2.0)) / (slots / 2.0)

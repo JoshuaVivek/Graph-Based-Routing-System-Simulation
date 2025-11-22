@@ -73,6 +73,10 @@ std::vector<HeuristicPath> KShortestPathsHeuristic::generate_candidates(int sour
             int v_idx = edge_pair.first;
             int edge_idx = edge_pair.second;
             
+            //if edge is removed, continue
+            if (g.all_Edges[edge_idx].is_removed) {
+                continue;
+            }
             // Check if the neighbor node is blocked/removed (not usually in KSP, but good practice)
             // Assuming no temporary blocking is needed for candidate generation
             const Edge& edge = g.all_Edges[edge_idx];
@@ -146,9 +150,8 @@ double KShortestPathsHeuristic::overlap_percent(const HeuristicPath& a, const He
 
 // Score a set of k paths according to a penalty formula
 double KShortestPathsHeuristic::total_penalty(const std::vector<HeuristicPath>& paths, double overlap_threshold) const {
-    if (paths.empty()) return {
+    if (paths.empty()) return
         INFINITY_DISTANCE;
-    }
 
     // A large constant penalty factor for violating the overlap constraint
     const double OVERLAP_PENALTY_FACTOR = 1000.0;

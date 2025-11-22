@@ -8,6 +8,10 @@
 struct Path {
     std::vector<int> nodes;  // Vector of node IDs from source to target
     double length;           // The total distance of this path
+
+    bool operator<(const Path& other) const {
+        return length < other.length;
+    }// In priority queue <double,path> , if double was equal, it needs to compare path, adding the comparator
 };
 
 class KShortestPathsExact {

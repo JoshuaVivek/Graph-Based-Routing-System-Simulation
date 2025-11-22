@@ -1,0 +1,34 @@
+{
+  "meta": {
+    "id": "qset_phase2_test"
+  },
+  "events": [
+    {
+      "type": "k_shortest_paths",
+      "id": 1,
+      "source": 0,
+      "target": 3,
+      "k": 3,
+      "mode": "distance"
+    },
+    {
+      "type": "k_shortest_paths_heuristic",
+      "id": 2,
+      "source": 0,
+      "target": 3,
+      "k": 2,
+      "overlap_threshold": 50.0
+    },
+    {
+      "type": "approx_shortest_path",
+      "id": 3,
+      "time_budget_ms": 100,
+      "acceptable_error_pct": 10.0,
+      "queries": [
+        { "source": 0, "target": 3 },
+        { "source": 0, "target": 1 },
+        { "source": 0, "target": 4 }
+      ]
+    }
+  ]
+}

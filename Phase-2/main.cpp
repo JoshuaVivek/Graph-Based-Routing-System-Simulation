@@ -9,7 +9,7 @@
 #include "graph.h"
 #include "kshortest.h"
 #include "kshortest_heuristic.h"
-#include "approx_shortest.h"
+#include "approx.h"
 #include "../json.h" 
 
 using namespace std;
@@ -53,15 +53,17 @@ int main(int argc, char **argv) {
         cout << "Loading graph from: " << graph_filename << " ..." << endl;
         
         // Check if loading was successful
-        if (!G.load_from_json(graph_filename)) {
+        /*if (!G.load_from_json(graph_filename)) {
             throw runtime_error("Failed to load graph from JSON.");
-        }
+        }*/
+        G.load_from_json(graph_filename);
+        G.make_adj_list();
 
         // Initializing our solvers
         // We create these once and reuse them for all queries to save setup time
         KShortestPathsExact exact_solver(G);
         KShortestPathsHeuristic heuristic_solver(G);
-        ApproxShortestPaths approx_solver(G);
+        ApproxRouter approx_solver(&G);
 
         // Reading all queries from the input file
         json query_data = read_json_file(query_filename);
@@ -135,31 +137,11 @@ int main(int argc, char **argv) {
 
                 // Approximate Shortest Path (Batch)
                 else if (type == "approx_shortest_path") {
-                    long long time_budget = current_query.at("time_budget_ms").get<long long>();
-                    double max_error = current_query.at("acceptable_error_pct");
-
-                    // Collect all sub-queries for this batch
-                    vector<ApproxQuery> batch_queries;
-                    for (const auto &q : current_query.at("queries")) {
-                        ApproxQuery aq;
-                        aq.source = q.at("source");
-                        aq.target = q.at("target");
-                        batch_queries.push_back(aq);
-                    }
-
-                    // Running the batch solver
-                    auto results = approx_solver.solve_batch(batch_queries, time_budget, max_error);
-
-                    // Formatting output
-                    json dist_array = json::array();
-                    for (const auto &res : results) {
-                        json dist_obj;
-                        dist_obj["source"] = res.source;
-                        dist_obj["target"] = res.target;
-                        dist_obj["approx_shortest_distance"] = res.approx_distance;
-                        dist_array.push_back(dist_obj);
-                    }
-                    query_result["distances"] = dist_array;
+                    // Pass the whole JSON object. The solver handles the loop internally.
+                    json batch_result = approx_solver.solve_batch(current_query);
+                    
+                    // Merge the distances array into the result
+                    query_result["distances"] = batch_result["distances"];
                 }
 
                 // When query type is unknown

@@ -1,0 +1,46 @@
+{
+  "meta": {
+    "id": "test_phase2_small",
+    "nodes": 5,
+    "description": "Small test graph for Phase 2 validation"
+  },
+  "nodes": [
+    {"id": 0, "lat": 19.0760, "lon": 72.8777, "pois": ["Start"]},
+    {"id": 1, "lat": 19.0800, "lon": 72.8800, "pois": []},
+    {"id": 2, "lat": 19.0700, "lon": 72.8800, "pois": []},
+    {"id": 3, "lat": 19.0760, "lon": 72.8900, "pois": ["End"]},
+    {"id": 4, "lat": 19.1000, "lon": 72.9000, "pois": ["Isolated"]}
+  ],
+  "edges": [
+    {
+      "id": 100, "u": 0, "v": 1, 
+      "length": 100.0, "average_time": 10.0, "speed_profile": [], 
+      "oneway": false, "road_type": "primary"
+    },
+    {
+      "id": 101, "u": 1, "v": 3, 
+      "length": 100.0, "average_time": 10.0, "speed_profile": [], 
+      "oneway": false, "road_type": "primary"
+    },
+    {
+      "id": 102, "u": 0, "v": 2, 
+      "length": 120.0, "average_time": 12.0, "speed_profile": [], 
+      "oneway": false, "road_type": "secondary"
+    },
+    {
+      "id": 103, "u": 2, "v": 3, 
+      "length": 120.0, "average_time": 12.0, "speed_profile": [], 
+      "oneway": false, "road_type": "secondary"
+    },
+    {
+      "id": 104, "u": 0, "v": 3, 
+      "length": 500.0, "average_time": 50.0, "speed_profile": [], 
+      "oneway": false, "road_type": "expressway"
+    },
+    {
+      "id": 105, "u": 3, "v": 4, 
+      "length": 50.0, "average_time": 5.0, "speed_profile": [], 
+      "oneway": false, "road_type": "local"
+    }
+  ]
+}

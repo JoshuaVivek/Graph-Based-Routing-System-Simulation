@@ -71,6 +71,11 @@ Path KShortestPathsExact::shortest_path(int source_id, int target_id, const std:
             if (blocked_edge_index[edge_idx]) {
                 continue;
             }
+
+            //skip if edge is removed
+            if (g.all_Edges[edge_idx].is_removed) {
+                continue;
+            }
             const Edge& edge = g.all_Edges[edge_idx];
             double edge_weight = edge.length; 
 

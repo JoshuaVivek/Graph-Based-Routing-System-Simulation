@@ -10,7 +10,7 @@
 #include "kshortest.h"
 #include "kshortest_heuristic.h"
 #include "approx.h"
-#include "../json.h" 
+#include "json.h" 
 
 using namespace std;
 using json = nlohmann::json;

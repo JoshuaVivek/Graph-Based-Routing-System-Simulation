@@ -9,7 +9,7 @@
 #include "graph.h"
 #include "shortestpathfinder.h"
 #include "knn.h"
-#include "../json.h"
+#include "json.h"
 
 using namespace std;
 using json = nlohmann::json;

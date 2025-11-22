@@ -4,7 +4,7 @@
 #include "graph.h"
 #include <vector>
 #include <chrono>
-#include "../json.h"
+#include "json.h"
 
 using namespace std;
 using json = nlohmann::json;
